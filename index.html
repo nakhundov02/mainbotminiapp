@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>HiggsField AI Studio</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:#060810;--surface:#0d1117;--surface2:#141922;--border:rgba(255,255,255,.07);
+    --accent:#7c5cfc;--accent2:#c471ed;--accent3:#12c2e9;--gold:#f7971e;
+    --text:#eef0f8;--muted:#6b7280;--danger:#ef4444;--success:#22c55e;
+    --r:16px;--rs:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+  .blob1,.blob2{position:fixed;border-radius:50%;pointer-events:none;z-index:0;opacity:.13;filter:blur(80px)}
+  .blob1{width:360px;height:360px;background:var(--accent);top:-100px;left:-80px}
+  .blob2{width:300px;height:300px;background:var(--accent3);bottom:-80px;right:-60px}
+  header{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid var(--border);background:rgba(6,8,16,.88);backdrop-filter:blur(20px);flex-shrink:0}
+  .logo{display:flex;align-items:center;gap:8px}
+  .logo-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;box-shadow:0 0 18px rgba(124,92,252,.4);color:#fff;font-family:'Syne',sans-serif}
+  .logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.5px}
+  .logo-text span{color:var(--accent)}
+  .credits-pill{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:5px 12px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+  .credits-pill:hover{border-color:var(--accent)}
+  .credits-val{font-family:'Syne',sans-serif;font-weight:700;color:var(--gold)}
+  main{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;padding:0 0 76px;scrollbar-width:thin;scrollbar-color:var(--surface2) transparent}
+  main::-webkit-scrollbar{width:3px}
+  main::-webkit-scrollbar-thumb{background:var(--surface2)}
+  .screen{display:none;padding:16px 14px;animation:fadeUp .28s ease}
+  .screen.active{display:block}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .hero{text-align:center;padding:20px 6px 16px}
+  .hero-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.28);border-radius:100px;padding:4px 13px;font-size:11px;color:var(--accent);font-weight:600;margin-bottom:12px;letter-spacing:.3px}
+  .hero h1{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1.15;letter-spacing:-.7px;margin-bottom:8px}
+  .hero h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{color:var(--muted);font-size:13px;line-height:1.5;max-width:270px;margin:0 auto 16px}
+  .sec{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:16px 0 9px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}
+  .card::before{content:'';position:absolute;inset:0;opacity:0;transition:.2s;background:linear-gradient(135deg,rgba(124,92,252,.1),transparent)}
+  .card:hover::before,.card:active::before{opacity:1}
+  .card:active{transform:scale(.97)}
+  .ci{font-size:24px}.cl{font-family:'Syne',sans-serif;font-size:12px;font-weight:700}.cd{font-size:11px;color:var(--muted);line-height:1.4}
+  .cc{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--gold);font-weight:600;background:rgba(247,151,30,.1);border-radius:5px;padding:2px 7px;margin-top:1px;width:fit-content}
+  .card.wide{grid-column:1 / -1;flex-direction:row;align-items:center;gap:12px}
+  .card.wide .cb{flex:1}
+  .card[data-c=purple]{border-color:rgba(124,92,252,.2)}.card[data-c=pink]{border-color:rgba(196,113,237,.2)}.card[data-c=cyan]{border-color:rgba(18,194,233,.2)}.card[data-c=orange]{border-color:rgba(247,151,30,.2)}.card[data-c=green]{border-color:rgba(34,197,94,.2)}
+  .th{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .back{width:34px;height:34px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;flex-shrink:0;transition:.2s}
+  .back:hover{border-color:var(--accent)}
+  .tt{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;letter-spacing:-.4px}
+  .ts{font-size:11px;color:var(--muted);margin-top:1px}
+  .uz{border:2px dashed rgba(124,92,252,.28);border-radius:var(--r);background:rgba(124,92,252,.03);padding:28px 18px;text-align:center;cursor:pointer;transition:.25s;margin-bottom:12px;position:relative;overflow:hidden}
+  .uz:hover,.uz.drag{border-color:var(--accent);background:rgba(124,92,252,.07)}
+  .uz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .uzi{font-size:32px;margin-bottom:8px}.uzl{font-size:13px;font-weight:500;margin-bottom:3px}.uzh{font-size:11px;color:var(--muted)}
+  .uz.ok{border-style:solid;border-color:var(--success);background:rgba(34,197,94,.04)}
+  .pvw{width:100%;border-radius:9px;max-height:180px;object-fit:cover;display:none;margin-top:9px}
+  .pvw.show{display:block}
+  .il{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;letter-spacing:.3px}
+  textarea,input[type=text],input[type=number],select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:11px 13px;outline:none;resize:none;transition:border-color .2s}
+  textarea:focus,input[type=text]:focus{border-color:var(--accent)}
+  textarea{min-height:90px}
+  .ir{margin-bottom:12px}
+  .ihint{font-size:10px;color:var(--muted);margin-top:4px}
+  input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+  .srow{display:flex;align-items:center;gap:9px}
+  .sv{font-size:12px;font-weight:700;color:var(--accent);min-width:30px;text-align:right}
+  .btn{width:100%;padding:14px;border-radius:var(--r);border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;letter-spacing:-.1px;cursor:pointer;transition:all .2s}
+  .bp{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 6px 22px rgba(124,92,252,.3)}
+  .bp:hover{box-shadow:0 8px 28px rgba(124,92,252,.45);transform:translateY(-1px)}
+  .bp:active{transform:scale(.98)}
+  .bp:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+  .bs{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+  .lo{display:none;position:fixed;inset:0;z-index:100;background:rgba(6,8,16,.9);backdrop-filter:blur(14px);align-items:center;justify-content:center;flex-direction:column;gap:16px}
+  .lo.show{display:flex}
+  .sp{width:52px;height:52px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .lt{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}.ls{font-size:12px;color:var(--muted)}
+  .pbw{width:220px;height:3px;background:var(--surface2);border-radius:3px;overflow:hidden}
+  .pb{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;animation:ind 1.4s ease-in-out infinite}
+  @keyframes ind{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+  .rc{background:var(--surface);border:1px solid rgba(34,197,94,.2);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+  .rc img,.rc video{width:100%;display:block}
+  .rc audio{width:100%;padding:10px;background:var(--surface2);display:block}
+  .ra{display:flex;gap:7px;padding:10px}
+  .ra a{flex:1;text-align:center;padding:9px;border-radius:var(--rs);background:var(--surface2);border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:12px;font-weight:600;transition:.2s}
+  .ra a:hover{border-color:var(--accent);color:var(--accent)}
+  nav.tb{position:fixed;bottom:0;left:0;right:0;z-index:20;background:rgba(6,8,16,.94);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;padding:7px 0 max(7px,env(safe-area-inset-bottom))}
+  .ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 0;transition:.2s;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.3px}
+  .tii{font-size:19px;transition:.2s}
+  .ti.active{color:var(--accent)}
+  .ti.active .tii{transform:scale(1.12)}
+  .pg{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .pc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;cursor:pointer;transition:.2s;text-align:center}
+  .pc:hover,.pc.best{border-color:var(--accent)}
+  .pc.best{background:rgba(124,92,252,.07)}
+  .pb2{font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.5px;margin-bottom:3px}
+  .pcr{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--gold)}
+  .pcr span{font-size:11px;color:var(--muted);font-weight:400;font-family:'DM Sans',sans-serif}
+  .pcp{font-size:12px;color:var(--muted);margin:3px 0 9px}
+  .pbb{display:block;width:100%;padding:7px;border-radius:7px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;transition:.2s}
+  .ptabs{display:flex;gap:7px;margin-bottom:14px}
+  .ptab{flex:1;padding:8px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:.2s}
+  .ptab.active{border-color:var(--accent);color:var(--accent);background:rgba(124,92,252,.09)}
+  .pm{display:none}.pm.active{display:block;animation:fadeUp .22s ease}
+  .wi{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:.2s}
+  .wi:hover{border-color:var(--accent)}
+  .wsym{font-family:'Syne',sans-serif;font-weight:700;font-size:13px}.wnet{font-size:10px;color:var(--muted)}.wc{font-size:11px;color:var(--accent);font-weight:600}
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:9px 18px;font-size:12px;font-weight:500;z-index:200;opacity:0;transition:all .28s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.s{border-color:var(--success);color:var(--success)}.toast.e{border-color:var(--danger);color:var(--danger)}
+  .mo{display:none;position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);align-items:flex-end;justify-content:center}
+  .mo.show{display:flex}
+  .md{background:var(--surface);border:1px solid var(--border);border-radius:22px 22px 0 0;padding:22px 18px 38px;width:100%;max-height:78vh;overflow-y:auto;animation:slideUp .28s ease}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .mh{width:34px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 18px}
+  .mt2{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:5px}
+  .ms{font-size:12px;color:var(--muted);margin-bottom:18px}
+  .div{height:1px;background:var(--border);margin:14px 0}
+  .ib{background:rgba(18,194,233,.06);border:1px solid rgba(18,194,233,.18);border-radius:var(--rs);padding:11px 13px;font-size:12px;color:rgba(18,194,233,.9);line-height:1.5;margin-bottom:12px}
+  .wb{background:rgba(247,151,30,.06);border:1px solid rgba(247,151,30,.18);border-radius:var(--rs);padding:11px 13px;font-size:12px;color:var(--gold);line-height:1.5;margin-bottom:12px}
+  .trow{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--surface2);border-radius:var(--rs);margin-bottom:9px}
+  .tgl{width:40px;height:22px;background:var(--border);border-radius:100px;cursor:pointer;transition:.22s;position:relative;flex-shrink:0}
+  .tgl.on{background:var(--accent)}
+  .tgl::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.22s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+  .tgl.on::after{left:21px}
+  .or{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+  .opt{padding:7px 14px;border-radius:100px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:.2s}
+  .opt.active{border-color:var(--accent);color:var(--accent);background:rgba(124,92,252,.09)}
+  .steps{counter-reset:step;margin-bottom:14px}
+  .step{display:flex;gap:10px;margin-bottom:11px;align-items:flex-start;counter-increment:step}
+  .sn{width:24px;height:24px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-family:'Syne',sans-serif}
+  .sn::before{content:counter(step)}
+  .st{font-size:12px;color:var(--muted);line-height:1.5;padding-top:3px}
+</style>
+</head>
+<body>
+<div class="blob1"></div><div class="blob2"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">H</div>
+    <div class="logo-text">Higgs<span>Field</span></div>
+  </div>
+  <div class="credits-pill" onclick="showTab('credits')">
+    <span>🪙</span><span class="credits-val" id="cv">10</span>
+    <span style="color:var(--muted);font-size:11px">cr</span>
+    <span style="color:var(--accent);font-size:13px;margin-left:1px;font-weight:700">+</span>
+  </div>
+</header>
+
+<main id="mc">
+
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div class="hero">
+    <div class="hero-badge">✦ AI Creative Studio</div>
+    <h1>Create anything<br/>with <span>AI power</span></h1>
+    <p>Images, videos, music, voice cloning — powered by cutting-edge models.</p>
+  </div>
+  <div class="sec">Generate</div>
+  <div class="grid">
+    <div class="card" data-c="purple" onclick="go('t2i')"><div class="ci">🧠</div><div class="cl">Text → Image</div><div class="cd">GPT-Image from prompt</div><div class="cc">🪙 1 cr</div></div>
+    <div class="card" data-c="cyan" onclick="go('video')"><div class="ci">🎬</div><div class="cl">Text → Video</div><div class="cd">WAN 2.5 AI video</div><div class="cc">🪙 3/sec</div></div>
+    <div class="card" data-c="orange" onclick="go('i2v')"><div class="ci">🖼️</div><div class="cl">Animate Image</div><div class="cd">Bring photos to life</div><div class="cc">🪙 3/sec</div></div>
+    <div class="card" data-c="green" onclick="go('music')"><div class="ci">🎵</div><div class="cl">Music Gen</div><div class="cd">AI music from text</div><div class="cc">🪙 2 cr</div></div>
+  </div>
+  <div class="sec">Transform</div>
+  <div class="grid">
+    <div class="card" data-c="pink" onclick="go('charswap')"><div class="ci">🧬</div><div class="cl">Char Swap</div><div class="cd">Replace person in scene</div><div class="cc">🪙 3 cr</div></div>
+    <div class="card" data-c="purple" onclick="go('motion')"><div class="ci">🎭</div><div class="cl">Motion Transfer</div><div class="cd">Apply video motion</div><div class="cc">🪙 4 cr</div></div>
+    <div class="card" data-c="cyan" onclick="go('edit')"><div class="ci">✏️</div><div class="cl">Edit Image</div><div class="cd">Add/remove by prompt</div><div class="cc">🪙 2 cr</div></div>
+    <div class="card" data-c="orange" onclick="go('upscale')"><div class="ci">⬆️</div><div class="cl">Upscale 4×</div><div class="cd">Crystal super-res</div><div class="cc">🪙 1 cr</div></div>
+  </div>
+  <div class="sec">Audio</div>
+  <div class="grid">
+    <div class="card wide" data-c="green" onclick="go('voice')">
+      <div class="ci" style="font-size:30px">🎙️</div>
+      <div class="cb"><div class="cl">Voice Clone TTS</div><div class="cd">Upload sample → AI reads any text in your voice</div><div class="cc" style="margin-top:5px">🪙 1 cr/sec</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TEXT TO IMAGE -->
+<div id="s-t2i" class="screen">
+  <div class="th"><div class="back" onclick="goHome()">←</div><div><div class="tt">🧠 Text → Image</div><div class="ts">GPT-Image 1.5 · 1 credit</div></div></div>
+  <div class="ir"><div class="il">DESCRIBE YOUR IMAGE</div><textarea id="t2iP" placeholder="A cinematic portrait in neon-lit Tokyo rain, ultra realistic, 8K…" rows="4"></textarea></div>
+  <div class="ir"><div class="il">SIZE</div><div class="or" id="t2iS"><div class="opt active" data-v="1024x1024" onclick="pick(this,'t2iS')">1:1</div><div class="opt" data-v="1792x1024" onclick="pick(this,'t2iS')">16:9</div><div class="opt" data-v="1024x1792" onclick="pick(this,'t2iS')">9:16</div></div></div>
+  <div id="t2iR" class="rc" style="display:none"></div>
+  <button class="btn bp" onclick="runT2I()">✦ Generate Image — 🪙1</button>
+</div>
+
+<!-- VIDEO T2V -->
+<div id="s-video" class="screen">
+  <div class="th"><div class="back" onclick="goHome()">←</div><div><div class="tt">🎬 Text → Video</div><div class="ts">WAN 2.5 · 3 credits/second</div></div></div>
+  <div class="ir"><div class="il">VIDEO PROMPT</div><textarea id="vidP" placeholder="A majestic eagle soaring over snowy mountains at golden hour, cinematic…" rows="4"></textarea></div>
+  <div class="ir"><div class="il">DURATION</div><div class="or" id="vidD"><div class="opt active" data-v="3" onclick="pick(this,'vidD')">3s 🪙9</div><div class="opt" data-v="5" onclick="pick(this,'vidD')">5s 🪙15</div><div class="opt" data-v="8" onclick="pick(this,'vidD')">8s 🪙24</div><div class="opt" data-v="10" onclick="pick(this,'vidD')">10s 🪙30</div></div></div>
+  <div class="ir"><div class="il">ASPECT RATIO</div><div class="or" id="vidA"><div class="opt active" data-v="16:9" onclick="pick(this,'vidA')">16:9</div><div class="opt" data-v="9:16" onclick="pick(this,'vidA')">9:16</div><div class="opt" data-v="1:1" onclick="pick(this,'vidA')">1:1</div></div></div>
+  <div id="vidR" class="rc" style="display:none"></div>
+  <button class="btn bp" onclick="runVideo()">✦ Generate Video</button>
+</div>
+
+<!-- IMAGE TO VIDEO -->
+<div id="s-i2v" class="screen">
+  <div class="th"><div class="back" onclick="goHome()">←</div><div><div class="tt">🖼️ Animate Image</div><div class="ts">WAN 2.5 · 3 credits/sec</div></div></div>
+  <div class="uz" id="i2vZ" onclick="trig('i2vF')"><input type="file" id="i2vF" accept="image/*" onchange="imgUp('i2vF','i2vZ','i2vPv')"/><div class="uzi">🖼️</div><div class="uzl">Upload Image</div><div class="uzh">JPG, PNG, WEBP</div><img id="i2vPv" class="pvw"/></div>
+  <div class="ir"><div class="il">MOTION PROMPT (optional)</div><textarea id="i2vP" placeholder="Subtle natural motion, cinematic drift…" rows="3"></textarea></div>
+  <div class="ir"><div class="il">DURATION</div><div class="or" id="i2vD"><div class="opt active" data-v="3" onclick="pick(this,'i2vD')">3s</div><div class="opt" data-v="5" onclick="pick(this,'i2vD')">5s</div><div class="opt" data-v="8" onclick="pick(this,'i2vD')">8s</div></div></div>
+  <div id="i2vR" class="rc" style="display:none"></div>
+  <button class="btn bp" onclick="runI2V()">✦ Animate — 🪙3/sec</button>
+</div>
+
+<!-- MUSIC -->
+<div id="s-music" class="screen">
+  <div class="th"><div class="back" onclick="goHome()">←</div><div><div class="tt">🎵 Music Generator</div><div class="ts">MiniMax Hailuo · 2 credits</div></div></div>
+  <div class="ib">🎼 Describe the style, mood, instruments and feel.</div>
+  <div class="ir"><div class="il">MUSIC DESCRIPTION</div><textarea id="musP" placeholder="Upbeat electronic lo-fi with soft piano, late night city vibes…" rows="4"></textarea></div>
+  <div class="ir"><div class="il">DURATION</div><div class="or" id="musD"><div class="opt active" data-v="15" onclick="pick(this,'musD')">15 sec</div><div class="opt" data-v="20" onclick="pick(this,'musD')">20 sec</div><div class="opt" data-v="30" onclick="pick(this,'musD')">30 sec</div></div></div>
+  <div id="musR" class="rc" style="display:none"></div>
+  <button class="btn bp" onclick="runMusic()">✦ Generate Music — 🪙2</button>
+</div>
+
+<!-- CHARACTER SWAP -->
+<div id="s-charswap" class="screen">
+  <div class="th"><div class="back" onclick="goHome()">←</div><div><div class="tt">🧬 Character Swap</div><div class="ts">Kling O1 · 3 credits</div></div></div>
+  <div class="ib">Replace the main person in a scene with your chosen character.</div>
+  <div class="steps">
+    <div class="step"><div class="sn"></div><div class="st">Upload the <strong>base scene</strong> (background & pose to keep)</div></div>
+    <div class="step"><div class="sn"></div><div class="st">Upload the <strong>character reference</strong> (face/person to insert)</div></div>
+    <div class="step"><div class="sn"></div><div class="st">AI replaces the person keeping original pose & lighting</div></div>
+  </div>
+  <div class="il" style="margin-bottom:7px">BASE SCENE IMAGE</div>
+  <div class="uz" id="csZ1" onclick="trig('csF1')"><input type="file" id="csF1" accept="image/*" onchange="imgUp('csF1','csZ1','csPv1')"/><div class="uzi">🏞️</div><div class="uzl">Upload Scene Image</div><div class="uzh">Background & pose to keep</div><img id="csPv1" class="pvw"/></div>
+  <div class="il" style="margin-bottom:7px">CHARACTER REFERENCE</div>
+  <div class="uz" id="csZ2" onclick="trig('csF2')"><input type="file" id="csF2" accept="image/*" onchange="imgUp('csF2','csZ2','csPv2')"/><div class="uzi">🧑</div><div class="uzl">Upload Character Photo</div><div class="uzh">Clear frontal face photo</div><img id="csPv2" class="pvw"/></div>
+  <div class="ir"><div class="il">EXTRA INSTRUCTION (optional)</div><input type="text" id="csX" placeholder="e.g. wearing a red jacket…"/></div>
+  <div class="ir"><div class="il">OUTPUT FORMAT</div><div class="or" id="csO"><div class="opt active" data-v="image" onclick="pick(this,'csO')">🖼️ Image only</div><div class="opt" data-v="video" onclick="pick(this,'csO')">🎬 + Animate video</div></div></div>
+  <div id="csR" class="rc" style="display:none"></div>
+  <button class="btn bp" onclick="runCS()">✦ Swap Character — 🪙3</button>
+</div>
+
+<!-- MOTION TRANSFER -->
+<div id="s-motion" class="screen">
+  <div class="th"><div class="back" onclick="goHome()">←</div><div><div class="tt">🎭 Motion Transfer</div><div class="ts">Kling v2.6 · 4 credits</div></div></div>
+  <div class="ib">Apply motion from any video onto your face/character image.</div>
+  <div class="il" style="margin-bottom:7px">REFERENCE FACE IMAGE</div>
+  <div class="uz" id="mtZ1" onclick="trig('mtF1')"><input type="file" id="mtF1" accept="image/*" onchange="imgUp('mtF1','mtZ1','mtPv1')"/><div class="uzi">🧑‍🎤</div><div class="uzl">Upload Face Image</div><div class="uzh">Clear frontal photo, no glasses</div><img id="mtPv1" class="pvw"/></div>
+  <div class="il" style="margin-bottom:7px">MOTION VIDEO (≥ 3 seconds)</div>
+  <div class="uz" id="mtZ2" onclick="trig('mtF2')"><input type="file" id="mtF2" accept="video/*" onchange="vidUp('mtF2','mtZ2')"/><div class="uzi">🎥</div><div class="uzl">Upload Motion Video</div><div class="uzh">MP4, MOV — minimum 3 seconds</div></div>
+  <div class="trow"><span style="font-size:13px;font-weight:500">🔊 Keep original sound</span><div class="tgl on" id="mtSnd" onclick="this.classList.toggle('on')"></div></div>
+  <div id="mtR" class="rc" style="display:none"></div>
+  <button class="btn bp" onclick="runMT()">✦ Transfer Motion — 🪙4</button>
+</div>
+
+<!-- EDIT IMAGE -->
+<div id="s-edit" class="screen">
+  <div class="th"><div class="back" onclick="goHome()">←</div><div><div class="tt">✏️ Edit Image</div><div class="ts">Nano Banana / WAN i2i · 2 credits</div></div></div>
+  <div class="uz" id="oeZ" onclick="trig('oeF')"><input type="file" id="oeF" accept="image/*" onchange="imgUp('oeF','oeZ','oePv')"/><div class="uzi">🖼️</div><div class="uzl">Upload Image to Edit</div><div class="uzh">JPG, PNG, WEBP</div><img id="oePv" class="pvw"/></div>
+  <div class="ir"><div class="il">EDIT INSTRUCTION</div><textarea id="oeP" placeholder="Add a red sports car in the background… Remove the umbrella… Change sky to sunset…" rows="3"></textarea></div>
+  <div class="ir"><div class="il">ENGINE</div><div class="or" id="oeE"><div class="opt active" data-v="nano" onclick="pick(this,'oeE')">⚡ Nano (fast)</div><div class="opt" data-v="wan" onclick="pick(this,'oeE')">🌊 WAN i2i (quality)</div></div></div>
+  <div id="oeR" class="rc" style="display:none"></div>
+  <button class="btn bp" onclick="runEdit()">✦ Edit Image — 🪙2</button>
+</div>
+
+<!-- UPSCALE -->
+<div id="s-upscale" class="screen">
+  <div class="th"><div class="back" onclick="goHome()">←</div><div><div class="tt">⬆️ Upscale Image</div><div class="ts">Crystal Upscaler · 1 credit</div></div></div>
+  <div class="uz" id="upZ" onclick="trig('upF')"><input type="file" id="upF" accept="image/*" onchange="imgUp('upF','upZ','upPv')"/><div class="uzi">⬆️</div><div class="uzl">Upload Image</div><div class="uzh">Enhanced up to 4× resolution</div><img id="upPv" class="pvw"/></div>
+  <div class="ir"><div class="il">SCALE FACTOR</div><div class="or" id="upSc"><div class="opt active" data-v="2" onclick="pick(this,'upSc')">2×</div><div class="opt" data-v="4" onclick="pick(this,'upSc')">4×</div></div></div>
+  <div id="upR" class="rc" style="display:none"></div>
+  <button class="btn bp" onclick="runUp()">✦ Upscale — 🪙1</button>
+</div>
+
+<!-- VOICE CLONE -->
+<div id="s-voice" class="screen">
+  <div class="th"><div class="back" onclick="goHome()">←</div><div><div class="tt">🎙️ Voice Clone TTS</div><div class="ts">Chatterbox · 1 credit/sec</div></div></div>
+  <div class="ib">Upload a voice sample (10s–5min) → AI clones it and reads any text in your voice.</div>
+  <div class="uz" id="vcZ" onclick="trig('vcF')"><input type="file" id="vcF" accept="audio/*,video/*" onchange="audUp('vcF','vcZ')"/><div class="uzi">🎤</div><div class="uzl">Upload Voice Sample</div><div class="uzh">MP3, OGG, WAV, M4A — min 10 seconds</div></div>
+  <div class="ir"><div class="il">TEXT TO SPEAK</div><textarea id="vcT" placeholder="Hello! This is my AI cloned voice reading whatever you want…" rows="5" oninput="document.getElementById('vcCC').textContent=this.value.length+' / 10,000'"></textarea><div class="ihint" id="vcCC">0 / 10,000</div></div>
+  <div class="sec" style="margin-top:4px">VOICE TUNING</div>
+  <div class="ir"><div class="il">EXAGGERATION (emotion intensity)</div><div class="srow"><input type="range" min="0" max="1" step="0.05" value="0.35" id="vcEx" oninput="document.getElementById('vcExV').textContent=parseFloat(this.value).toFixed(2)"/><span class="sv" id="vcExV">0.35</span></div></div>
+  <div class="ir"><div class="il">TEMPERATURE (variability)</div><div class="srow"><input type="range" min="0.1" max="1" step="0.05" value="0.60" id="vcTp" oninput="document.getElementById('vcTpV').textContent=parseFloat(this.value).toFixed(2)"/><span class="sv" id="vcTpV">0.60</span></div></div>
+  <div id="vcR" class="rc" style="display:none"></div>
+  <button class="btn bp" onclick="runVoice()">✦ Generate Voice — 🪙1/sec</button>
+</div>
+
+<!-- CREDITS -->
+<div id="s-credits" class="screen">
+  <div class="th"><div class="back" onclick="showTab('home')">←</div><div><div class="tt">🪙 Buy Credits</div><div class="ts">Power your AI creations</div></div></div>
+  <div style="text-align:center;padding:8px 0 18px"><div style="font-size:38px;font-family:'Syne',sans-serif;font-weight:800;color:var(--gold)" id="bcv">10</div><div style="font-size:12px;color:var(--muted)">Your current credits</div></div>
+  <div class="ptabs">
+    <div class="ptab active" onclick="swPay(this,'pc')">💳 Card</div>
+    <div class="ptab" onclick="swPay(this,'ps')">⭐ Stars</div>
+    <div class="ptab" onclick="swPay(this,'px')">₿ Crypto</div>
+  </div>
+  <div class="pm active" id="pc">
+    <div class="pg">
+      <div class="pc" onclick="buyCard('micro',2.99,18)"><div class="pb2">MICRO</div><div class="pcr">18<span> cr</span></div><div class="pcp">$2.99</div><button class="pbb">Buy</button></div>
+      <div class="pc" onclick="buyCard('starter',6.99,50)"><div class="pb2">STARTER</div><div class="pcr">50<span> cr</span></div><div class="pcp">$6.99</div><button class="pbb">Buy</button></div>
+      <div class="pc best" onclick="buyCard('popular',14.99,120)"><div class="pb2" style="color:var(--gold)">★ POPULAR</div><div class="pcr">120<span> cr</span></div><div class="pcp">$14.99</div><button class="pbb">Buy</button></div>
+      <div class="pc" onclick="buyCard('pro',29.99,280)"><div class="pb2">PRO</div><div class="pcr">280<span> cr</span></div><div class="pcp">$29.99</div><button class="pbb">Buy</button></div>
+      <div class="pc" style="grid-column:1/-1" onclick="buyCard('studio',59.99,650)"><div class="pb2">🎬 STUDIO</div><div class="pcr">650<span> cr</span></div><div class="pcp">$59.99</div><button class="pbb" style="max-width:180px;margin:0 auto">Buy</button></div>
+    </div>
+  </div>
+  <div class="pm" id="ps">
+    <div class="ib">⭐ Pay with Telegram Stars — no credit card needed!</div>
+    <div class="pg">
+      <div class="pc" onclick="buyStars('micro',50,15)"><div class="pb2">MICRO</div><div class="pcr">15<span> cr</span></div><div class="pcp">⭐ 50 Stars</div><button class="pbb">Buy</button></div>
+      <div class="pc" onclick="buyStars('starter',100,45)"><div class="pb2">STARTER</div><div class="pcr">45<span> cr</span></div><div class="pcp">⭐ 100 Stars</div><button class="pbb">Buy</button></div>
+      <div class="pc best" onclick="buyStars('popular',250,110)"><div class="pb2" style="color:var(--gold)">★ POPULAR</div><div class="pcr">110<span> cr</span></div><div class="pcp">⭐ 250 Stars</div><button class="pbb">Buy</button></div>
+      <div class="pc" onclick="buyStars('pro',500,260)"><div class="pb2">PRO</div><div class="pcr">260<span> cr</span></div><div class="pcp">⭐ 500 Stars</div><button class="pbb">Buy</button></div>
+    </div>
+  </div>
+  <div class="pm" id="px">
+    <div class="wb">⚠️ Send exact USDT to wallet below, then DM support with your TX hash.</div>
+    <div class="pg" style="margin-bottom:14px">
+      <div class="pc" onclick="openW(2.99,25)"><div class="pb2">MICRO</div><div class="pcr">25<span> cr</span></div><div class="pcp">$2.99 USDT</div><button class="pbb">Pay</button></div>
+      <div class="pc" onclick="openW(6.99,70)"><div class="pb2">STARTER</div><div class="pcr">70<span> cr</span></div><div class="pcp">$6.99 USDT</div><button class="pbb">Pay</button></div>
+      <div class="pc best" onclick="openW(14.99,170)"><div class="pb2" style="color:var(--gold)">★ POPULAR</div><div class="pcr">170<span> cr</span></div><div class="pcp">$14.99 USDT</div><button class="pbb">Pay</button></div>
+      <div class="pc" onclick="openW(29.99,420)"><div class="pb2">PRO</div><div class="pcr">420<span> cr</span></div><div class="pcp">$29.99 USDT</div><button class="pbb">Pay</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- GALLERY -->
+<div id="s-gallery" class="screen">
+  <div class="th"><div class="back" onclick="showTab('home')">←</div><div><div class="tt">📁 My Creations</div><div class="ts">Your recent generations</div></div></div>
+  <div id="histList"><div style="text-align:center;padding:50px 0;color:var(--muted)"><div style="font-size:38px;margin-bottom:10px">🎨</div><div style="font-size:13px">Your creations will appear here</div><div style="font-size:11px;margin-top:5px">Start generating!</div></div></div>
+</div>
+
+</main>
+
+<nav class="tb">
+  <div class="ti active" id="th" onclick="showTab('home')"><div class="tii">🏠</div><span>Home</span></div>
+  <div class="ti" id="tg" onclick="showTab('gallery')"><div class="tii">📁</div><span>Gallery</span></div>
+  <div class="ti" id="tc" onclick="showTab('credits')"><div class="tii">🪙</div><span>Credits</span></div>
+</nav>
+
+<div class="lo" id="lo">
+  <div class="sp"></div>
+  <div class="lt" id="lt">Generating…</div>
+  <div class="ls" id="ls">This may take 30–120 seconds</div>
+  <div class="pbw"><div class="pb"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="mo" id="wm" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mt2" id="wmT">Send USDT</div>
+    <div class="ms">Choose a network and copy the wallet address</div>
+    <div id="wmL"></div>
+    <div class="div"></div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.6">After sending, DM our support with your TX hash and Telegram ID to receive credits.</div>
+    <button class="btn bs" style="margin-top:13px" onclick="document.getElementById('wm').classList.remove('show')">Close</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// CONFIGURATION — edit these two lines
+// ════════════════════════════════════════════
+const API = '';           // Your backend URL e.g. 'https://your-server.com'
+const BOT = 'YourBot';   // Your bot username (no @)
+
+// ════════════════════════════════════════════
+const tg = window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#060810');tg.setBackgroundColor('#060810');}catch(e){}}
+const userId = tg?.initDataUnsafe?.user?.id || 'guest';
+
+let credits = 10;
+let hist = [];
+
+function updCr(){document.getElementById('cv').textContent=credits;document.getElementById('bcv').textContent=credits;}
+function spend(n){if(credits<n){toast('Not enough credits! Buy more 🪙','e');setTimeout(()=>showTab('credits'),900);return false;}credits-=n;updCr();return true;}
+
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('s-'+id)?.classList.add('active');document.getElementById('mc').scrollTop=0;document.querySelectorAll('.ti').forEach(t=>t.classList.remove('active'));}
+function goHome(){go('home');document.getElementById('th').classList.add('active');}
+function showTab(t){go(t==='home'?'home':t==='gallery'?'gallery':'credits');['th','tg','tc'].forEach(id=>document.getElementById(id)?.classList.remove('active'));document.getElementById({home:'th',gallery:'tg',credits:'tc'}[t])?.classList.add('active');}
+
+function pick(el,g){document.getElementById(g)?.querySelectorAll('.opt').forEach(o=>o.classList.remove('active'));el.classList.add('active');}
+function gopt(g){return document.getElementById(g)?.querySelector('.opt.active')?.dataset?.v||null;}
+
+function trig(id){document.getElementById(id)?.click();}
+function imgUp(fi,zi,pi){
+  const f=document.getElementById(fi)?.files[0];if(!f)return;
+  const z=document.getElementById(zi),p=document.getElementById(pi);
+  z.classList.add('ok');
+  const r=new FileReader();
+  r.onload=e=>{if(p){p.src=e.target.result;p.classList.add('show');}z.querySelector('.uzi').style.display='none';z.querySelector('.uzl').textContent='✅ '+f.name;z.querySelector('.uzh').textContent=(f.size/1024).toFixed(0)+' KB';};
+  r.readAsDataURL(f);
+}
+function vidUp(fi,zi){const f=document.getElementById(fi)?.files[0];if(!f)return;const z=document.getElementById(zi);z.classList.add('ok');z.querySelector('.uzi').textContent='✅';z.querySelector('.uzl').textContent=f.name;z.querySelector('.uzh').textContent=(f.size/1024/1024).toFixed(1)+' MB';}
+function audUp(fi,zi){vidUp(fi,zi);}
+
+function showL(t,s){document.getElementById('lt').textContent=t||'Generating…';document.getElementById('ls').textContent=s||'This may take 30–120 seconds';document.getElementById('lo').classList.add('show');}
+function hideL(){document.getElementById('lo').classList.remove('show');}
+
+let toastT;
+function toast(m,type=''){const el=document.getElementById('toast');el.textContent=m;el.className='toast show '+(type||'');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),3200);}
+
+function showRes(cid,type,url,demo){
+  const el=document.getElementById(cid);el.style.display='block';
+  if(demo||!url){el.innerHTML=`<div style="padding:22px;text-align:center;color:var(--muted)"><div style="font-size:28px;margin-bottom:8px">🔗</div><div style="font-weight:600;font-size:13px;margin-bottom:5px">Connect Backend API</div><div style="font-size:11px;line-height:1.6">Set the <code style="background:var(--surface2);padding:2px 5px;border-radius:4px">API</code> variable at the top of the script to your backend URL.<br/>All your engine .py files are ready to wire up.</div></div>`;return;}
+  if(type==='image')el.innerHTML=`<img src="${url}" style="width:100%"/><div class="ra"><a href="${url}" download>⬇ Download</a><a href="${url}" target="_blank">🔗 Open</a></div>`;
+  else if(type==='video')el.innerHTML=`<video src="${url}" controls style="width:100%"></video><div class="ra"><a href="${url}" download>⬇ Download</a><a href="${url}" target="_blank">🔗 Open</a></div>`;
+  else if(type==='audio')el.innerHTML=`<audio src="${url}" controls></audio><div class="ra"><a href="${url}" download>⬇ Download</a></div>`;
+}
+
+function addHist(type,icon,html){
+  hist.unshift({type,icon,html,t:new Date().toLocaleTimeString()});
+  const el=document.getElementById('histList');
+  el.innerHTML=hist.map(h=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden"><div style="padding:10px 13px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border)"><span style="font-size:18px">${h.icon}</span><span style="font-weight:600;font-size:13px">${h.type}</span><span style="color:var(--muted);font-size:11px;margin-left:auto">${h.t}</span></div><div style="padding:10px">${h.html}</div></div>`).join('');
+}
+
+async function callApi(path,fd,onOk){
+  if(!API){await new Promise(r=>setTimeout(r,2000));hideL();onOk({demo:true});return;}
+  try{
+    if(tg?.initData)fd.append('init_data',tg.initData);
+    fd.append('user_id',String(userId));
+    const res=await fetch(API+path,{method:'POST',body:fd});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const d=await res.json();
+    if(d.error)throw new Error(d.error);
+    hideL();onOk(d);
+  }catch(e){hideL();toast('Error: '+e.message,'e');}
+}
+
+// ── TOOLS ────────────────────────────────────────────────────────
+async function runT2I(){
+  const p=document.getElementById('t2iP').value.trim();
+  if(!p){toast('Enter a prompt','e');return;}
+  if(!spend(1))return;
+  showL('🧠 Generating image…','GPT-Image 1.5 — up to 60 seconds');
+  const fd=new FormData();fd.append('prompt',p);fd.append('size',gopt('t2iS')||'1024x1024');
+  await callApi('/api/t2i',fd,d=>{showRes('t2iR','image',d.url,d.demo);toast('✅ Image ready!','s');if(!d.demo)addHist('Text→Image','🧠',document.getElementById('t2iR').innerHTML);});
+}
+async function runVideo(){
+  const p=document.getElementById('vidP').value.trim();
+  if(!p){toast('Enter a prompt','e');return;}
+  const dur=parseInt(gopt('vidD')||'5');
+  if(!spend(dur*3))return;
+  showL('🎬 Generating video…',`WAN 2.5 — ${dur}s video, ~90 seconds`);
+  const fd=new FormData();fd.append('prompt',p);fd.append('duration',dur);fd.append('aspect_ratio',gopt('vidA')||'16:9');
+  await callApi('/api/video_t2v',fd,d=>{showRes('vidR','video',d.url,d.demo);toast('✅ Video ready!','s');});
+}
+async function runI2V(){
+  const f=document.getElementById('i2vF').files[0];
+  if(!f){toast('Upload an image','e');return;}
+  const dur=parseInt(gopt('i2vD')||'5');
+  if(!spend(dur*3))return;
+  showL('🖼️ Animating image…','WAN 2.5 — up to 90 seconds');
+  const fd=new FormData();fd.append('image',f);fd.append('prompt',document.getElementById('i2vP').value.trim());fd.append('duration',dur);
+  await callApi('/api/i2v',fd,d=>{showRes('i2vR','video',d.url,d.demo);toast('✅ Animation ready!','s');});
+}
+async function runMusic(){
+  const p=document.getElementById('musP').value.trim();
+  if(!p){toast('Describe the music','e');return;}
+  if(!spend(2))return;
+  showL('🎵 Composing music…','MiniMax Hailuo — up to 60 seconds');
+  const fd=new FormData();fd.append('prompt',p);fd.append('duration',gopt('musD')||'20');
+  await callApi('/api/music',fd,d=>{showRes('musR','audio',d.url,d.demo);toast('🎵 Music ready!','s');});
+}
+async function runCS(){
+  const b=document.getElementById('csF1').files[0],c=document.getElementById('csF2').files[0];
+  if(!b||!c){toast('Upload both images','e');return;}
+  if(!spend(3))return;
+  showL('🧬 Swapping character…','Kling O1 — up to 120 seconds');
+  const fd=new FormData();fd.append('base_image',b);fd.append('char_image',c);fd.append('prompt',document.getElementById('csX').value.trim());fd.append('output',gopt('csO')||'image');
+  await callApi('/api/charswap',fd,d=>{const t=d.is_video?'video':'image';showRes('csR',t,d.url,d.demo);toast('✅ Character swapped!','s');});
+}
+async function runMT(){
+  const i=document.getElementById('mtF1').files[0],v=document.getElementById('mtF2').files[0];
+  if(!i||!v){toast('Upload both image and video','e');return;}
+  if(!spend(4))return;
+  showL('🎭 Transferring motion…','Kling v2.6 — up to 120 seconds');
+  const fd=new FormData();fd.append('ref_image',i);fd.append('motion_video',v);fd.append('keep_sound',document.getElementById('mtSnd').classList.contains('on')?'1':'0');
+  await callApi('/api/motion',fd,d=>{showRes('mtR','video',d.url,d.demo);toast('✅ Motion transferred!','s');});
+}
+async function runEdit(){
+  const f=document.getElementById('oeF').files[0],p=document.getElementById('oeP').value.trim();
+  if(!f||!p){toast('Upload image and enter instruction','e');return;}
+  if(!spend(2))return;
+  showL('✏️ Editing image…','Nano Banana / WAN i2i — up to 60 seconds');
+  const fd=new FormData();fd.append('image',f);fd.append('prompt',p);fd.append('engine',gopt('oeE')||'nano');
+  await callApi('/api/edit',fd,d=>{showRes('oeR','image',d.url,d.demo);toast('✅ Image edited!','s');});
+}
+async function runUp(){
+  const f=document.getElementById('upF').files[0];
+  if(!f){toast('Upload an image','e');return;}
+  if(!spend(1))return;
+  showL('⬆️ Upscaling…','Crystal Upscaler — up to 60 seconds');
+  const fd=new FormData();fd.append('image',f);fd.append('scale',gopt('upSc')||'4');
+  await callApi('/api/upscale',fd,d=>{showRes('upR','image',d.url,d.demo);toast('✅ Upscale done!','s');});
+}
+async function runVoice(){
+  const f=document.getElementById('vcF').files[0],t=document.getElementById('vcT').value.trim();
+  if(!f){toast('Upload voice sample','e');return;}
+  if(!t){toast('Enter text to speak','e');return;}
+  const est=Math.max(1,Math.ceil(t.length/15));
+  if(!spend(est))return;
+  showL('🎙️ Cloning voice…','Chatterbox — up to 60 seconds');
+  const fd=new FormData();fd.append('audio_sample',f);fd.append('text',t);fd.append('exaggeration',document.getElementById('vcEx').value);fd.append('temperature',document.getElementById('vcTp').value);
+  await callApi('/api/voice',fd,d=>{showRes('vcR','audio',d.url,d.demo);toast('🎙️ Voice ready!','s');});
+}
+
+// ── PAYMENTS ─────────────────────────────────────────────────────
+function swPay(el,id){
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.pm').forEach(m=>m.classList.remove('active'));
+  el.classList.add('active');document.getElementById(id)?.classList.add('active');
+}
+function buyCard(pack,usd,cr){
+  if(tg)tg.sendData(JSON.stringify({action:'buy_card',pack,usd,cr}));
+  else toast('Open in Telegram to pay','e');
+}
+function buyStars(pack,stars,cr){
+  if(tg)tg.sendData(JSON.stringify({action:'buy_stars',pack,stars,cr}));
+  else toast('Open in Telegram to pay','e');
+}
+
+const WALLETS={
+  'USDT — TRC20':{sym:'USDT',addr:'TTZyK5eVQAoTWHxeM15bqVAbaDY8in5yo5'},
+  'USDT — TON':{sym:'USDT',addr:'UQDmHp5yyTnlhOTPacP0_QWkYhVvAhQOUMly5dtISZGBx5Eu'},
+  'USDT — Solana':{sym:'USDT',addr:'Cvf9kVtPMx9N2Jmsb5Z8udnZKPry6DL3RJ1EYY5RJURi'},
+  'USDT — ERC20':{sym:'USDT',addr:'0x19c0d746B809abd65B5EE91F4CeFBc910d630112'},
+  'TON':{sym:'TON',addr:'UQDmHp5yyTnlhOTPacP0_QWkYhVvAhQOUMly5dtISZGBx5Eu'},
+  'BTC':{sym:'BTC',addr:'bc1q45es48c4fks3e4mw5yxk8l4q38lwqr4hel9xqc'},
+  'ETH':{sym:'ETH',addr:'0x19c0d746B809abd65B5EE91F4CeFBc910d630112'},
+  'SOL':{sym:'SOL',addr:'Cvf9kVtPMx9N2Jmsb5Z8udnZKPry6DL3RJ1EYY5RJURi'},
+};
+function openW(usd,cr){
+  document.getElementById('wmT').textContent=`Send $${usd} → Get ${cr} credits`;
+  document.getElementById('wmL').innerHTML=Object.entries(WALLETS).map(([n,w])=>`<div class="wi" onclick="cpAddr('${w.addr}','${w.sym}')"><div style="display:flex;align-items:center;gap:9px"><span style="font-size:18px">${{BTC:'₿',ETH:'Ξ',SOL:'◎',TON:'💎',USDT:'₮'}[w.sym]||'₮'}</span><div><div class="wsym">${n}</div><div class="wnet" style="font-size:10px;margin-top:1px;color:var(--muted)">${w.addr.slice(0,18)}…</div></div></div><div class="wc">Copy</div></div>`).join('');
+  document.getElementById('wm').classList.add('show');
+}
+function cpAddr(addr,sym){navigator.clipboard?.writeText(addr).then(()=>toast(`${sym} address copied!`,'s')).catch(()=>toast(addr.slice(0,24)+'…'));}
+
+// ── INIT ────────────────────────────────────────────────────────
+async function fetchCr(){
+  if(!API||!tg?.initData)return;
+  try{const r=await fetch(API+'/api/credits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({init_data:tg.initData})});const d=await r.json();if(d.credits!==undefined){credits=d.credits;updCr();}}catch{}
+}
+fetchCr();updCr();
+</script>
+</body>
+</html>
